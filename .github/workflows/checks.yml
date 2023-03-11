@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-hooks
     env:
+      DATABASE_URL: postgresql://devuser:changeme@db:5432/devdb
       DEBUG: True
       SECRET_KEY: change_me
 

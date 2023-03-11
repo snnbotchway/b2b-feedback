@@ -16,19 +16,14 @@ services:
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     environment:
-      - CLIENT_URL=${CLIENT_URL}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
-      - DATABASE_URL=${DATABASE_URL}
       - DEBUG=${DEBUG}
-      - DEFAULT_FROM_EMAIL=from@snnbotchway.com
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=changeme
       - EMAIL_HOST=smtp4dev
       - EMAIL_HOST_USER=
       - EMAIL_HOST_PASSWORD=
       - EMAIL_PORT=25
-      - SECRET_KEY=${SECRET_KEY}
-      - SOCIAL_AUTH_ALLOWED_REDIRECT_URIS=${SOCIAL_AUTH_ALLOWED_REDIRECT_URIS}
-      - SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=${SOCIAL_AUTH_GOOGLE_OAUTH2_KEY}
-      - SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=${SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET}
+      - DEFAULT_FROM_EMAIL=from@snnbotchway.com
     depends_on:
       - db
       - smtp4dev

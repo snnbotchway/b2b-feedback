@@ -3,7 +3,7 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModel
 from rest_framework.viewsets import GenericViewSet
 
 from .models import Client, Questionnaire
-from .permissions import IsSalesManager
+from .permissions import IsClientRepresentative, IsSalesManager
 from .serializers import ClientSerializer, QuestionnaireSerializer
 
 
@@ -33,10 +33,25 @@ class ClientViewSet(
 
 class QuestionnaireViewSet(
     CreateModelMixin,
+    ListModelMixin,
     GenericViewSet,
 ):
     """The questionnaire viewset."""
 
-    queryset = Questionnaire.objects.all()
+    queryset = Questionnaire.objects.prefetch_related("questions__choices").all()
     serializer_class = QuestionnaireSerializer
-    permission_classes = [IsSalesManager]
+
+    def _is_list_action(self):
+        return self.action == "list"
+
+    def get_queryset(self):
+        """Filter list queryset to questionnaires the current user is assigned."""
+        if self._is_list_action():
+            return self.queryset.filter(client_rep=self.request.user)
+        return self.queryset
+
+    def get_permissions(self):
+        """Client reps can list and Sales managers can create questionnaires."""
+        if self._is_list_action():
+            return [IsClientRepresentative()]
+        return [IsSalesManager()]

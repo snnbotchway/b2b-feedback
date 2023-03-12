@@ -1,11 +1,12 @@
 import pytest
 from django.urls import reverse
-from feedback.models import Client
-from feedback.serializers import ClientSerializer
+from feedback.models import Client, Questionnaire
+from feedback.serializers import ClientSerializer, QuestionnaireSerializer
 from model_bakery import baker
 from rest_framework import status
 
 CLIENTS_URL = reverse("feedback:client-list")
+QUESTIONNAIRES_URL = reverse("feedback:questionnaire-list")
 
 
 @pytest.mark.django_db
@@ -93,3 +94,46 @@ class TestManageClients:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert Client.objects.count() == 1
+
+
+@pytest.mark.django_db
+class TestQuestionnaires:
+    """Tests on questionnaire management."""
+
+    def test_create_questionnaire_returns_201(
+        self, api_client, client_rep, questionnaire_payload, sales_manager
+    ):
+        """Test creating a questionnaire is successful."""
+        api_client.force_authenticate(user=sales_manager)
+
+        response = api_client.post(
+            QUESTIONNAIRES_URL, questionnaire_payload, format="json"
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        questionnaires = Questionnaire.objects.filter(
+            client_rep_id=response.data.get("client_rep")
+        )
+        assert questionnaires.count() == 1
+        questionnaire = questionnaires.first()
+        assert questionnaire.questions.count() == 4
+        serializer = QuestionnaireSerializer(questionnaire)
+        assert response.data == serializer.data
+
+        # Assert the last two questions are false just like in the payload
+        questions = questionnaire.questions.all()
+        assert questions[0].required == questions[1].required is True
+        assert questions[2].required == questions[3].required is False
+
+    def test_only_sales_manager_can_create_questionnaire(
+        self, api_client, questionnaire_payload, sample_user
+    ):
+        """Test non sales manager cannot create a questionnaire."""
+        api_client.force_authenticate(user=sample_user)
+
+        response = api_client.post(
+            QUESTIONNAIRES_URL, questionnaire_payload, format="json"
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Questionnaire.objects.count() == 0

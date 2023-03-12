@@ -10,5 +10,5 @@ class IsSalesManager(BasePermission):
 
     def has_permission(self, request, view):
         """Return true if current user is in the Sales Mangers group."""
-        sales_manager_group = Group.objects.get_or_create(name=SALES_MANAGER_GROUP)
+        sales_manager_group, _ = Group.objects.get_or_create(name=SALES_MANAGER_GROUP)
         return sales_manager_group in request.user.groups.all()

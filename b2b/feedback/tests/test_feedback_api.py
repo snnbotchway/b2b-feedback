@@ -137,3 +137,30 @@ class TestQuestionnaires:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert Questionnaire.objects.count() == 0
+
+    def test_client_rep_can_list_assigned_questionnaires(self, api_client, client_rep):
+        """Test client reps can list their questionnaires."""
+        api_client.force_authenticate(user=client_rep)
+        baker.make(Questionnaire, client_rep=client_rep)
+        baker.make(Questionnaire)
+
+        response = api_client.get(QUESTIONNAIRES_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        questionnaires = Questionnaire.objects.filter(client_rep=client_rep)
+        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        assert serializer.data == response.data
+        assert len(response.data) == 1
+
+    def test_non_client_rep_cannot_list_questionnaires(self, api_client, sample_user):
+        """Test non client reps cannot list questionnaires."""
+        api_client.force_authenticate(user=sample_user)
+        baker.make(Questionnaire, client_rep=sample_user)
+        baker.make(Questionnaire)
+
+        response = api_client.get(QUESTIONNAIRES_URL)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        questionnaires = Questionnaire.objects.filter(client_rep=sample_user)
+        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        assert serializer.data != response.data

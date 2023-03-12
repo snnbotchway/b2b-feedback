@@ -26,15 +26,12 @@ class ClientSerializer(serializers.ModelSerializer):
 class QuestionChoiceSerializer(serializers.ModelSerializer):
     """The question choice serializer."""
 
-    # question = serializers.IntegerField(read_only=True)
-
     class Meta:
         """Question choice serializer meta class."""
 
         model = QuestionChoice
         fields = [
             "id",
-            # "question",
             "value",
             "order",
         ]
@@ -44,7 +41,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     """The question serializer."""
 
     choices = QuestionChoiceSerializer(many=True, required=False)
-    # questionnaire = serializers.IntegerField(read_only=True)
 
     class Meta:
         """Question serializer meta class."""
@@ -52,7 +48,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             "id",
-            # "questionnaire",
             "question_type",
             "question_text",
             "order",

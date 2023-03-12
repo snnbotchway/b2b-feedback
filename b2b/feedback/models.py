@@ -4,17 +4,20 @@ from django.db import models
 
 User = get_user_model()
 
+CLIENT_REP_GROUP = "Corporate Client Representatives"
+SALES_MANAGER_GROUP = "Sales Managers"
+
 
 class Client(models.Model):
     """The client model."""
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     name = models.CharField(max_length=255)
     client_rep = models.ForeignKey(
         User,
         blank=True,
         null=True,
-        limit_choices_to={"groups__name": "Corporate Client Representatives"},
+        limit_choices_to={"groups__name": CLIENT_REP_GROUP},
         related_name="client_rep_clients",
         on_delete=models.SET_NULL,
     )
@@ -22,7 +25,7 @@ class Client(models.Model):
         User,
         blank=True,
         null=True,
-        limit_choices_to={"groups__name": "Sales Managers"},
+        limit_choices_to={"groups__name": SALES_MANAGER_GROUP},
         related_name="sales_manager_clients",
         on_delete=models.SET_NULL,
     )
@@ -37,8 +40,13 @@ class Client(models.Model):
 class Questionnaire(models.Model):
     """The Questionnaire model."""
 
-    client = models.ForeignKey(
-        Client, on_delete=models.CASCADE, related_name="questionnaires"
+    client_rep = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="questionnaires",
+        blank=True,
+        null=True,
+        limit_choices_to={"groups__name": CLIENT_REP_GROUP},
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -94,7 +102,7 @@ class Response(models.Model):
         User,
         on_delete=models.SET_NULL,
         related_name="responses",
-        limit_choices_to={"groups__name": "Corporate Client Representatives"},
+        limit_choices_to={"groups__name": CLIENT_REP_GROUP},
         null=True,
     )
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)

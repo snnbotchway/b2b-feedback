@@ -1,16 +1,17 @@
 """Views for the feedback app."""
-from rest_framework import mixins, viewsets
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
+from rest_framework.viewsets import GenericViewSet
 
-from .models import Client
+from .models import Client, Questionnaire
 from .permissions import IsSalesManager
-from .serializers import ClientSerializer
+from .serializers import ClientSerializer, QuestionnaireSerializer
 
 
 class ClientViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    GenericViewSet,
 ):
     """The Client view set."""
 
@@ -28,3 +29,14 @@ class ClientViewSet(
     def perform_create(self, serializer):
         """Assign current user as the manager on client creation."""
         return serializer.save(sales_manager=self.request.user)
+
+
+class QuestionnaireViewSet(
+    CreateModelMixin,
+    GenericViewSet,
+):
+    """The questionnaire viewset."""
+
+    queryset = Questionnaire.objects.all()
+    serializer_class = QuestionnaireSerializer
+    permission_classes = [IsSalesManager]

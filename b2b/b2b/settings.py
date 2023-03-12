@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Local apps
     "account.apps.AccountConfig",
     "core.apps.CoreConfig",
+    "feedback.apps.FeedbackConfig",
     # Third-party apps
     "rest_framework",
     "rest_framework.authtoken",

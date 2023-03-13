@@ -40,10 +40,18 @@ class Client(models.Model):
 class Questionnaire(models.Model):
     """The Questionnaire model."""
 
+    author = models.ForeignKey(
+        User,
+        blank=True,
+        null=True,
+        limit_choices_to={"groups__name": SALES_MANAGER_GROUP},
+        related_name="sales_manager_questionnaires",
+        on_delete=models.SET_NULL,
+    )
     client_rep = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="questionnaires",
+        related_name="client_rep_questionnaires",
         blank=True,
         null=True,
         limit_choices_to={"groups__name": CLIENT_REP_GROUP},
@@ -101,11 +109,13 @@ class Response(models.Model):
     respondent = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="responses",
+        related_name="client_rep_responses",
         limit_choices_to={"groups__name": CLIENT_REP_GROUP},
         null=True,
     )
-    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
+    questionnaire = models.ForeignKey(
+        Questionnaire, on_delete=models.CASCADE, related_name="questionnaire_responses"
+    )
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

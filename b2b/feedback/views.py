@@ -1,10 +1,25 @@
 """Views for the feedback app."""
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
+from rest_framework.mixins import (
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+)
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import GenericViewSet
 
 from .models import Client, Questionnaire, Response
-from .permissions import IsClientRepresentative, IsSalesManager
-from .serializers import ClientSerializer, QuestionnaireSerializer, ResponseSerializer
+from .permissions import (
+    IsClientRepresentative,
+    IsSalesManager,
+    IsSalesManagerOrClientRep,
+)
+from .serializers import (
+    ClientSerializer,
+    QuestionnaireListSerializer,
+    QuestionnaireSerializer,
+    ResponseSerializer,
+)
 
 
 class ClientViewSet(
@@ -33,6 +48,7 @@ class ClientViewSet(
 
 class QuestionnaireViewSet(
     CreateModelMixin,
+    RetrieveModelMixin,
     ListModelMixin,
     GenericViewSet,
 ):
@@ -41,20 +57,37 @@ class QuestionnaireViewSet(
     queryset = Questionnaire.objects.prefetch_related("questions__choices").all()
     serializer_class = QuestionnaireSerializer
 
-    def _is_list_action(self):
-        return self.action == "list"
+    def _fetch_params(self):
+        query_params = self.request.query_params
+        sales_manager = int(query_params.get("sales_manager", 0))
+        client_rep = int(query_params.get("client_rep", 0))
+        return client_rep, sales_manager
 
     def get_queryset(self):
-        """Filter list queryset to questionnaires the current user is assigned."""
-        if self._is_list_action():
-            return self.queryset.filter(client_rep=self.request.user)
+        """Filter queryset with params."""
+        user = self.request.user
+        client_rep, sales_manager = self._fetch_params()
+        if client_rep:
+            return self.queryset.filter(client_rep=user)
+        elif sales_manager:
+            return self.queryset.filter(author=user)
         return self.queryset
 
     def get_permissions(self):
-        """Client reps can list and Sales managers can create questionnaires."""
-        if self._is_list_action():
-            return [IsClientRepresentative()]
+        """Return appropriate permissions."""
+        if self.request.method in SAFE_METHODS:
+            return [IsSalesManagerOrClientRep()]
         return [IsSalesManager()]
+
+    def get_serializer_class(self):
+        """Return appropriate serializer."""
+        if self.action == "list":
+            return QuestionnaireListSerializer
+        return QuestionnaireSerializer
+
+    def perform_create(self, serializer):
+        """Set current user as questionnaire author."""
+        return serializer.save(author=self.request.user)
 
 
 class ResponseViewSet(

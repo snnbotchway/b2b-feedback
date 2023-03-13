@@ -66,22 +66,33 @@ class QuestionSerializer(serializers.ModelSerializer):
         ]
 
 
-class QuestionnaireSerializer(serializers.ModelSerializer):
-    """The questionnaire serializer."""
-
-    questions = QuestionSerializer(many=True, required=True)
+class QuestionnaireListSerializer(serializers.ModelSerializer):
+    """The questionnaire list serializer."""
 
     class Meta:
-        """Questionnaire serializer meta class."""
+        """Questionnaire list serializer meta class."""
 
         model = Questionnaire
         fields = [
             "id",
-            "client_rep",
             "title",
+            "due_at",
+        ]
+
+
+class QuestionnaireSerializer(QuestionnaireListSerializer):
+    """The questionnaire serializer."""
+
+    questions = QuestionSerializer(many=True, required=True)
+
+    class Meta(QuestionnaireListSerializer.Meta):
+        """Questionnaire serializer meta class."""
+
+        model = Questionnaire
+        fields = QuestionnaireListSerializer.Meta.fields + [
+            "client_rep",
             "description",
             "is_active",
-            "due_at",
             "created_at",
             "questions",
         ]

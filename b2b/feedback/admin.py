@@ -2,7 +2,15 @@
 from django.contrib import admin
 from nested_admin.nested import NestedModelAdmin, NestedStackedInline
 
-from .models import Client, Question, QuestionChoice, Questionnaire
+from .models import (
+    Answer,
+    AnswerChoice,
+    Client,
+    Question,
+    QuestionChoice,
+    Questionnaire,
+    Response,
+)
 
 
 @admin.register(Client)
@@ -41,3 +49,28 @@ class QuestionnaireAdmin(NestedModelAdmin):
     list_editable = ["due_at"]
     list_select_related = ["client_rep"]
     search_fields = ["title__icontains", "description__icontains"]
+
+
+class AnswerChoiceInline(NestedStackedInline):
+    """Inline class for answer choices."""
+
+    model = AnswerChoice
+    extra = 0
+
+
+class AnswerInline(NestedStackedInline):
+    """Inline class for response answers."""
+
+    model = Answer
+    inlines = [AnswerChoiceInline]
+    extra = 0
+
+
+@admin.register(Response)
+class ResponseAdmin(NestedModelAdmin):
+    """Define admin configuration for the Questionnaire model."""
+
+    autocomplete_fields = ["questionnaire", "respondent"]
+    inlines = [AnswerInline]
+    list_select_related = ["questionnaire", "respondent"]
+    search_fields = ["questionnaire__title", "respondent__email"]

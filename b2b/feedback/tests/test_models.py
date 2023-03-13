@@ -52,7 +52,7 @@ class TestModels:
         response = baker.make(Response)
         answer = baker.make(Answer, question=question, response=response)
         assert isinstance(answer, Answer)
-        assert str(answer) == answer.answer_text
+        assert str(answer) == f"Answer to {question}"
 
     def test_answer_choice_creation(self):
         choice = baker.make(QuestionChoice)

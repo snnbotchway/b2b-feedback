@@ -5,6 +5,8 @@ from django.urls import reverse
 from feedback.models import CLIENT_REP_GROUP, SALES_MANAGER_GROUP
 from model_bakery import baker
 
+from .test_feedback_api import QUESTIONNAIRES_URL
+
 
 @pytest.fixture
 def client_payload():
@@ -62,7 +64,10 @@ def questionnaire_payload(client_rep):
                 "question_text": "True or False?",
                 "required": True,
                 "order": 2,
-                "choices": [],
+                "choices": [
+                    {"value": "True", "order": 1},
+                    {"value": "False", "order": 2},
+                ],
             },
             {
                 "question_type": "MULTIPLE_CHOICE",
@@ -83,6 +88,59 @@ def questionnaire_payload(client_rep):
                     {"value": "Option 1", "order": 1},
                     {"value": "Option 2", "order": 2},
                     {"value": "Option 3", "order": 3},
+                ],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def response_payload(api_client, sales_manager, questionnaire_payload):
+    """Return a sample response payload."""
+    # Create a questionnaire
+    api_client.force_authenticate(user=sales_manager)
+    response = api_client.post(QUESTIONNAIRES_URL, questionnaire_payload, format="json")
+
+    data = response.data
+    questions = data["questions"]
+    question1 = questions[0]
+    question2 = questions[1]
+    question3 = questions[2]
+    question4 = questions[3]
+
+    choice21 = question2["choices"][0]["id"]  # id of question2 choice 1
+    choice31 = question3["choices"][0]["id"]  # id of question3 choice 1
+    choice32 = question3["choices"][1]["id"]  # id of question3 choice 2
+    choice43 = question4["choices"][2]["id"]  # id of question4 choice 3
+
+    return {
+        "questionnaire": data["id"],
+        "answers": [
+            {
+                "question_id": question1["id"],
+                "answer_text": "My name is Solomon Botchway.",
+                "choices": [],
+            },
+            {
+                "question_id": question2["id"],
+                "answer_text": "",
+                "choices": [
+                    {"question_choice_id": choice21},
+                ],
+            },
+            {
+                "question_id": question3["id"],
+                "answer_text": "",
+                "choices": [
+                    {"question_choice_id": choice31},
+                    {"question_choice_id": choice32},
+                ],
+            },
+            {
+                "question_id": question4["id"],
+                "answer_text": "",
+                "choices": [
+                    {"question_choice_id": choice43},
                 ],
             },
         ],

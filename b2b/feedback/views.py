@@ -67,6 +67,16 @@ class ResponseViewSet(
     serializer_class = ResponseSerializer
     permission_classes = [IsClientRepresentative]
 
+    def get_serializer_context(self):
+        """Pass user and questionnaire id to serializer for validation."""
+        return {
+            "user": self.request.user,
+            "questionnaire_id": self.kwargs["questionnaire_pk"],
+        }
+
     def perform_create(self, serializer):
-        """Attach current user as the respondent."""
-        return serializer.save(respondent=self.request.user)
+        """Add response relationships."""
+        questionnaire_id = self.kwargs["questionnaire_pk"]
+        return serializer.save(
+            questionnaire_id=questionnaire_id, respondent=self.request.user
+        )

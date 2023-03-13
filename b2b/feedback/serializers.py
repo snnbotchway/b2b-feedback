@@ -1,5 +1,6 @@
 """Serializers for the feedback app."""
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -155,7 +156,6 @@ class ResponseSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "respondent",
-            "questionnaire",
             "submitted_at",
             "answers",
         ]
@@ -179,12 +179,11 @@ class ResponseSerializer(serializers.ModelSerializer):
 
             return response
 
-    def validate_questionnaire(self, value):
+    def validate(self, attrs):
         """Validate that current user is assigned to the questionnaire."""
-        user = self.context["request"].user
-        questionnaire = get_object_or_404(Questionnaire, pk=value.id)
-        if questionnaire.client_rep != user:
-            raise serializers.ValidationError(
-                "This questionnaire is not assigned to you."
-            )
-        return value
+        questionnaire = get_object_or_404(
+            Questionnaire, pk=self.context["questionnaire_id"]
+        )
+        if questionnaire.client_rep != self.context["user"]:
+            raise Http404()
+        return super().validate(attrs)

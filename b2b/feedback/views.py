@@ -8,7 +8,7 @@ from rest_framework.mixins import (
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import GenericViewSet
 
-from .models import Client, Questionnaire, Response
+from .models import Client, MonthlyFeedback, Questionnaire, Response
 from .pagination import ResponsePagination
 from .permissions import (
     IsClientRepresentative,
@@ -17,6 +17,7 @@ from .permissions import (
 )
 from .serializers import (
     ClientSerializer,
+    MonthlyFeedbackSerializer,
     QuestionnaireListSerializer,
     QuestionnaireSerializer,
     ResponseSerializer,
@@ -127,3 +128,18 @@ class ResponseViewSet(
         return serializer.save(
             questionnaire_id=questionnaire_id, respondent=self.request.user
         )
+
+
+class MonthlyFeedbackViewSet(
+    CreateModelMixin,
+    GenericViewSet,
+):
+    """The monthly feedback view set."""
+
+    queryset = MonthlyFeedback.objects.all()
+    serializer_class = MonthlyFeedbackSerializer
+    permission_classes = [IsClientRepresentative]
+
+    def perform_create(self, serializer):
+        """Assign current user as the client rep."""
+        return serializer.save(client_rep=self.request.user)

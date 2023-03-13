@@ -120,11 +120,11 @@ class Answer(models.Model):
         Response, on_delete=models.CASCADE, related_name="answers"
     )
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    answer_text = models.TextField()
+    answer_text = models.TextField(null=True, blank=True)
 
     def __str__(self):
         """Return the answer_text."""
-        return self.answer_text
+        return f"Answer to {self.question}"
 
 
 class AnswerChoice(models.Model):

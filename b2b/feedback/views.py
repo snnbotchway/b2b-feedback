@@ -2,9 +2,9 @@
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from .models import Client, Questionnaire
+from .models import Client, Questionnaire, Response
 from .permissions import IsClientRepresentative, IsSalesManager
-from .serializers import ClientSerializer, QuestionnaireSerializer
+from .serializers import ClientSerializer, QuestionnaireSerializer, ResponseSerializer
 
 
 class ClientViewSet(
@@ -55,3 +55,18 @@ class QuestionnaireViewSet(
         if self._is_list_action():
             return [IsClientRepresentative()]
         return [IsSalesManager()]
+
+
+class ResponseViewSet(
+    CreateModelMixin,
+    GenericViewSet,
+):
+    """The Response viewset."""
+
+    queryset = Response.objects.all()
+    serializer_class = ResponseSerializer
+    permission_classes = [IsClientRepresentative]
+
+    def perform_create(self, serializer):
+        """Attach current user as the respondent."""
+        return serializer.save(respondent=self.request.user)

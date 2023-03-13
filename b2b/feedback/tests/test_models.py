@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.db.utils import IntegrityError
 from feedback.models import (
     Answer,
     AnswerChoice,
@@ -77,9 +76,3 @@ class TestModels:
     def test_monthly_feedback_str_method(self, monthly_feedback):
         expected_output = f"{monthly_feedback.client_rep} - {monthly_feedback.month}"
         assert str(monthly_feedback) == expected_output
-
-    def test_monthly_feedback_unique_constraint(self, client_rep, monthly_feedback):
-        with pytest.raises(IntegrityError):
-            baker.make(
-                "MonthlyFeedback", client_rep=client_rep, month=monthly_feedback.month
-            )

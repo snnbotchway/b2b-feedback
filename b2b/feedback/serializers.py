@@ -8,6 +8,7 @@ from .models import (
     Answer,
     AnswerChoice,
     Client,
+    MonthlyFeedback,
     Question,
     QuestionChoice,
     Questionnaire,
@@ -198,3 +199,20 @@ class ResponseSerializer(serializers.ModelSerializer):
         if questionnaire.client_rep != self.context["user"]:
             raise Http404()
         return super().validate(attrs)
+
+
+class MonthlyFeedbackSerializer(serializers.ModelSerializer):
+    """Monthly feedback serializer model."""
+
+    class Meta:
+        """Monthly feedback serializer meta class."""
+
+        model = MonthlyFeedback
+        fields = [
+            "id",
+            "feedback",
+            "month",
+        ]
+        read_only_fields = [
+            "month",
+        ]

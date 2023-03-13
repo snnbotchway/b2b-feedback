@@ -6,6 +6,7 @@ from feedback.models import (
     CLIENT_REP_GROUP,
     AnswerChoice,
     Client,
+    MonthlyFeedback,
     Questionnaire,
     Response,
 )
@@ -22,6 +23,7 @@ User = get_user_model()
 
 CLIENTS_URL = reverse("feedback:client-list")
 QUESTIONNAIRES_URL = reverse("feedback:questionnaire-list")
+MONTHLY_FEEDBACK_URL = reverse("feedback:monthly-feedback-list")
 
 
 @pytest.mark.django_db
@@ -281,3 +283,33 @@ class TestManageResponses:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestManageMonthlyFeedback:
+    """Tests on monthly feedback management."""
+
+    def test_client_rep_create_monthly_feedback_201(
+        self, api_client, client_rep, feedback_payload
+    ):
+        """Test client rep create monthly feedback successful."""
+        api_client.force_authenticate(user=client_rep)
+
+        response = api_client.post(MONTHLY_FEEDBACK_URL, feedback_payload)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        feedback = MonthlyFeedback.objects.get(pk=response.data["id"])
+        assert feedback.client_rep == client_rep
+        assert feedback.month
+        assert MonthlyFeedback.objects.count() == 1
+
+    def test_non_client_rep_cannot_create_monthly_feedback_403(
+        self, api_client, sample_user, feedback_payload
+    ):
+        """Test non client reps can't create monthly feedback."""
+        api_client.force_authenticate(user=sample_user)
+
+        response = api_client.post(MONTHLY_FEEDBACK_URL, feedback_payload)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert MonthlyFeedback.objects.count() == 0

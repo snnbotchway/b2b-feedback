@@ -171,3 +171,9 @@ def response_payload(api_client, sales_manager, questionnaire_payload):
 def monthly_feedback(client_rep):
     """Return a monthly feedback assigned to client_rep."""
     return baker.make(MonthlyFeedback, client_rep=client_rep)
+
+
+@pytest.fixture
+def feedback_payload():
+    """Return payload of sample feedback."""
+    return {"feedback": "Sample feedback"}

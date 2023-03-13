@@ -111,11 +111,11 @@ class TestManageClients:
 
 
 @pytest.mark.django_db
-class TestQuestionnaires:
+class TestManageQuestionnaires:
     """Tests on questionnaire management."""
 
     def test_create_questionnaire_returns_201(
-        self, api_client, client_rep, questionnaire_payload, sales_manager
+        self, api_client, questionnaire_payload, sales_manager
     ):
         """Test creating a questionnaire is successful."""
         api_client.force_authenticate(user=sales_manager)
@@ -181,7 +181,7 @@ class TestQuestionnaires:
 
 
 @pytest.mark.django_db
-class TestResponses:
+class TestManageResponses:
     """Tests on questionnaire management."""
 
     def test_client_rep_create_response_returns_201(
@@ -198,6 +198,8 @@ class TestResponses:
         responses = Response.objects.filter(respondent=response.data["respondent"])
         assert responses.count() == 1
         feedback_response = responses.first()
+        assert feedback_response.questionnaire == questionnaire
+        assert feedback_response.respondent == client_rep
         assert feedback_response.answers.count() == 4
         assert AnswerChoice.objects.count() == 4
         serializer = ResponseSerializer(feedback_response)

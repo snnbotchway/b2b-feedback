@@ -11,6 +11,7 @@ from feedback.models import (
 )
 from feedback.serializers import (
     ClientSerializer,
+    QuestionnaireListSerializer,
     QuestionnaireSerializer,
     ResponseSerializer,
 )
@@ -115,7 +116,7 @@ class TestManageQuestionnaires:
     """Tests on questionnaire management."""
 
     def test_create_questionnaire_returns_201(
-        self, api_client, questionnaire_payload, sales_manager
+        self, api_client, client_rep, questionnaire_payload, sales_manager
     ):
         """Test creating a questionnaire is successful."""
         api_client.force_authenticate(user=sales_manager)
@@ -130,6 +131,8 @@ class TestManageQuestionnaires:
         )
         assert questionnaires.count() == 1
         questionnaire = questionnaires.first()
+        assert questionnaire.author == sales_manager
+        assert questionnaire.client_rep == client_rep
         assert questionnaire.questions.count() == 4
         serializer = QuestionnaireSerializer(questionnaire)
         assert response.data == serializer.data
@@ -158,11 +161,27 @@ class TestManageQuestionnaires:
         baker.make(Questionnaire, client_rep=client_rep)
         baker.make(Questionnaire)
 
-        response = api_client.get(QUESTIONNAIRES_URL)
+        response = api_client.get(f"{QUESTIONNAIRES_URL}?client_rep=1")
 
         assert response.status_code == status.HTTP_200_OK
         questionnaires = Questionnaire.objects.filter(client_rep=client_rep)
-        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
+        assert serializer.data == response.data
+        assert len(response.data) == 1
+
+    def test_sales_manager_can_list_authored_questionnaires(
+        self, api_client, sales_manager
+    ):
+        """Test sales managers can list authored questionnaires."""
+        api_client.force_authenticate(user=sales_manager)
+        baker.make(Questionnaire, author=sales_manager)
+        baker.make(Questionnaire)
+
+        response = api_client.get(f"{QUESTIONNAIRES_URL}?sales_manager=1")
+
+        assert response.status_code == status.HTTP_200_OK
+        questionnaires = Questionnaire.objects.filter(author=sales_manager)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
         assert serializer.data == response.data
         assert len(response.data) == 1
 
@@ -176,7 +195,7 @@ class TestManageQuestionnaires:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         questionnaires = Questionnaire.objects.filter(client_rep=sample_user)
-        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
         assert serializer.data != response.data
 
 

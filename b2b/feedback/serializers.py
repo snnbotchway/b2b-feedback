@@ -1,8 +1,18 @@
 """Serializers for the feedback app."""
 from django.db import transaction
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .models import Client, Question, QuestionChoice, Questionnaire
+from .models import (
+    Answer,
+    AnswerChoice,
+    Client,
+    Question,
+    QuestionChoice,
+    Questionnaire,
+    Response,
+)
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -56,22 +66,33 @@ class QuestionSerializer(serializers.ModelSerializer):
         ]
 
 
-class QuestionnaireSerializer(serializers.ModelSerializer):
-    """The questionnaire serializer."""
-
-    questions = QuestionSerializer(many=True, required=True)
+class QuestionnaireListSerializer(serializers.ModelSerializer):
+    """The questionnaire list serializer."""
 
     class Meta:
-        """Questionnaire serializer meta class."""
+        """Questionnaire list serializer meta class."""
 
         model = Questionnaire
         fields = [
             "id",
-            "client_rep",
             "title",
+            "due_at",
+        ]
+
+
+class QuestionnaireSerializer(QuestionnaireListSerializer):
+    """The questionnaire serializer."""
+
+    questions = QuestionSerializer(many=True, required=True)
+
+    class Meta(QuestionnaireListSerializer.Meta):
+        """Questionnaire serializer meta class."""
+
+        model = Questionnaire
+        fields = QuestionnaireListSerializer.Meta.fields + [
+            "client_rep",
             "description",
             "is_active",
-            "due_at",
             "created_at",
             "questions",
         ]
@@ -99,3 +120,81 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("At least one question is required.")
         return value
+
+
+class AnswerChoiceSerializer(serializers.ModelSerializer):
+    """The answer choice serializer."""
+
+    question_choice_id = serializers.IntegerField()
+
+    class Meta:
+        """Answer choice serializer meta class."""
+
+        model = AnswerChoice
+        fields = [
+            "id",
+            "question_choice_id",
+        ]
+
+
+class AnswerSerializer(serializers.ModelSerializer):
+    """The answer serializer."""
+
+    choices = AnswerChoiceSerializer(many=True, required=False)
+    question_id = serializers.IntegerField()
+
+    class Meta:
+        """Answer serializer meta class."""
+
+        model = Answer
+        fields = [
+            "id",
+            "answer_text",
+            "question_id",
+            "choices",
+        ]
+
+
+class ResponseSerializer(serializers.ModelSerializer):
+    """The response serializer."""
+
+    answers = AnswerSerializer(many=True, required=True)
+
+    class Meta:
+        """Response serializer meta class."""
+
+        model = Response
+        fields = [
+            "id",
+            "respondent",
+            "submitted_at",
+            "answers",
+        ]
+        read_only_fields = [
+            "respondent",
+        ]
+
+    def create(self, validated_data):
+        """Create a response."""
+        with transaction.atomic():
+            answers = validated_data.pop("answers", [])
+            response = Response.objects.create(**validated_data)
+
+            for answer in answers:
+                choices = answer.pop("choices", [])
+                answer = Answer.objects.create(**answer, response=response)
+                choice_objs = [
+                    AnswerChoice(**choice, answer=answer) for choice in choices
+                ]
+                AnswerChoice.objects.bulk_create(choice_objs)
+
+            return response
+
+    def validate(self, attrs):
+        """Validate that current user is assigned to the questionnaire."""
+        questionnaire = get_object_or_404(
+            Questionnaire, pk=self.context["questionnaire_id"]
+        )
+        if questionnaire.client_rep != self.context["user"]:
+            raise Http404()
+        return super().validate(attrs)

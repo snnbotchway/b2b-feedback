@@ -21,3 +21,15 @@ class IsClientRepresentative(BasePermission):
         """Return true if current user is in the Client Representatives group."""
         client_rep_group, _ = Group.objects.get_or_create(name=CLIENT_REP_GROUP)
         return client_rep_group in request.user.groups.all()
+
+
+class IsSalesManagerOrClientRep(BasePermission):
+    """Sales Managers or Client Representatives permission class."""
+
+    def has_permission(self, request, view):
+        """Return true if current user is in either group."""
+        sales_manager_group, _ = Group.objects.get_or_create(name=SALES_MANAGER_GROUP)
+        client_rep_group, _ = Group.objects.get_or_create(name=CLIENT_REP_GROUP)
+
+        user_groups = request.user.groups.all()
+        return sales_manager_group in user_groups or client_rep_group in user_groups

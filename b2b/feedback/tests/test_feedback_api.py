@@ -1,9 +1,24 @@
 import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.urls import reverse
-from feedback.models import Client, Questionnaire
-from feedback.serializers import ClientSerializer, QuestionnaireSerializer
+from feedback.models import (
+    CLIENT_REP_GROUP,
+    AnswerChoice,
+    Client,
+    Questionnaire,
+    Response,
+)
+from feedback.serializers import (
+    ClientSerializer,
+    QuestionnaireListSerializer,
+    QuestionnaireSerializer,
+    ResponseSerializer,
+)
 from model_bakery import baker
 from rest_framework import status
+
+User = get_user_model()
 
 CLIENTS_URL = reverse("feedback:client-list")
 QUESTIONNAIRES_URL = reverse("feedback:questionnaire-list")
@@ -97,7 +112,7 @@ class TestManageClients:
 
 
 @pytest.mark.django_db
-class TestQuestionnaires:
+class TestManageQuestionnaires:
     """Tests on questionnaire management."""
 
     def test_create_questionnaire_returns_201(
@@ -116,11 +131,13 @@ class TestQuestionnaires:
         )
         assert questionnaires.count() == 1
         questionnaire = questionnaires.first()
+        assert questionnaire.author == sales_manager
+        assert questionnaire.client_rep == client_rep
         assert questionnaire.questions.count() == 4
         serializer = QuestionnaireSerializer(questionnaire)
         assert response.data == serializer.data
 
-        # Assert the last two questions are false just like in the payload
+        # Assert that the last two questions are not required just like in the payload
         questions = questionnaire.questions.all()
         assert questions[0].required == questions[1].required is True
         assert questions[2].required == questions[3].required is False
@@ -144,11 +161,27 @@ class TestQuestionnaires:
         baker.make(Questionnaire, client_rep=client_rep)
         baker.make(Questionnaire)
 
-        response = api_client.get(QUESTIONNAIRES_URL)
+        response = api_client.get(f"{QUESTIONNAIRES_URL}?client_rep=1")
 
         assert response.status_code == status.HTTP_200_OK
         questionnaires = Questionnaire.objects.filter(client_rep=client_rep)
-        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
+        assert serializer.data == response.data
+        assert len(response.data) == 1
+
+    def test_sales_manager_can_list_authored_questionnaires(
+        self, api_client, sales_manager
+    ):
+        """Test sales managers can list authored questionnaires."""
+        api_client.force_authenticate(user=sales_manager)
+        baker.make(Questionnaire, author=sales_manager)
+        baker.make(Questionnaire)
+
+        response = api_client.get(f"{QUESTIONNAIRES_URL}?sales_manager=1")
+
+        assert response.status_code == status.HTTP_200_OK
+        questionnaires = Questionnaire.objects.filter(author=sales_manager)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
         assert serializer.data == response.data
         assert len(response.data) == 1
 
@@ -162,5 +195,60 @@ class TestQuestionnaires:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         questionnaires = Questionnaire.objects.filter(client_rep=sample_user)
-        serializer = QuestionnaireSerializer(questionnaires, many=True)
+        serializer = QuestionnaireListSerializer(questionnaires, many=True)
         assert serializer.data != response.data
+
+
+@pytest.mark.django_db
+class TestManageResponses:
+    """Tests on questionnaire management."""
+
+    def test_client_rep_create_response_returns_201(
+        self, api_client, client_rep, response_list_url, response_payload
+    ):
+        """Test creating a questionnaire is successful."""
+        api_client.force_authenticate(user=client_rep)
+        questionnaire = Questionnaire.objects.get(client_rep=client_rep)
+        url = response_list_url(questionnaire.id)
+
+        response = api_client.post(url, response_payload, format="json")
+
+        assert response.status_code == status.HTTP_201_CREATED
+        responses = Response.objects.filter(respondent=response.data["respondent"])
+        assert responses.count() == 1
+        feedback_response = responses.first()
+        assert feedback_response.questionnaire == questionnaire
+        assert feedback_response.respondent == client_rep
+        assert feedback_response.answers.count() == 4
+        assert AnswerChoice.objects.count() == 4
+        serializer = ResponseSerializer(feedback_response)
+        assert response.data == serializer.data
+
+    def test_client_reps_cannot_respond_unassigned_questionnaires(
+        self, api_client, client_rep, response_list_url, response_payload
+    ):
+        """Test client reps can't respond if they haven't been assigned."""
+        user = baker.make(User)
+        client_reps = Group.objects.get(name=CLIENT_REP_GROUP)
+        user.groups.add(client_reps)
+        api_client.force_authenticate(user=user)
+        questionnaire = Questionnaire.objects.get(client_rep=client_rep)
+        url = response_list_url(questionnaire.id)
+
+        response = api_client.post(url, response_payload, format="json")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert Response.objects.count() == 0
+
+    def test_anonymous_user_cannot_respond_to_questionnaires(
+        self, api_client, response_list_url, response_payload
+    ):
+        """Test anonymous users cannot respond to questionnaires."""
+        api_client.logout()
+        questionnaire = baker.make(Questionnaire)
+        url = response_list_url(questionnaire.id)
+
+        response = api_client.post(url, response_payload, format="json")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert Response.objects.count() == 0

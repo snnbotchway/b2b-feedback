@@ -3,3 +3,4 @@ django-environ>=0.10.0,<0.11
 psycopg2>=2.9.5,<2.10
 djangorestframework>=3.14.0,<3.15.0
 django-nested-admin>=4.0.2,<4.1
+drf-nested-routers>=0.93.4,<0.94

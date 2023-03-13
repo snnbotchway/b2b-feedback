@@ -174,11 +174,6 @@ class MonthlyFeedback(models.Model):
     class Meta:
         """Monthly feedback meta class."""
 
-        constraints = [
-            models.UniqueConstraint(
-                fields=["client_rep", "month"], name="unique_monthly_feedback"
-            ),
-        ]
         verbose_name_plural = "Monthly feedback"
 
     def __str__(self):

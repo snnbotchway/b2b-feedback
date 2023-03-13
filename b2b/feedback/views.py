@@ -9,6 +9,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import GenericViewSet
 
 from .models import Client, Questionnaire, Response
+from .pagination import ResponsePagination
 from .permissions import (
     IsClientRepresentative,
     IsSalesManager,
@@ -92,13 +93,26 @@ class QuestionnaireViewSet(
 
 class ResponseViewSet(
     CreateModelMixin,
+    ListModelMixin,
     GenericViewSet,
 ):
     """The Response viewset."""
 
     queryset = Response.objects.all()
     serializer_class = ResponseSerializer
-    permission_classes = [IsClientRepresentative]
+    pagination_class = ResponsePagination
+
+    def get_queryset(self):
+        """Filter responses with questionnaire id in url."""
+        return self.queryset.filter(
+            questionnaire_id=self.kwargs["questionnaire_pk"]
+        ).order_by("id")
+
+    def get_permissions(self):
+        """Return appropriate permissions."""
+        if self.request.method in SAFE_METHODS:
+            return [IsSalesManager()]
+        return [IsClientRepresentative()]
 
     def get_serializer_context(self):
         """Pass user and questionnaire id to serializer for validation."""

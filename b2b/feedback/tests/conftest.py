@@ -2,7 +2,7 @@
 import pytest
 from django.contrib.auth.models import Group
 from django.urls import reverse
-from feedback.models import CLIENT_REP_GROUP, SALES_MANAGER_GROUP
+from feedback.models import CLIENT_REP_GROUP, SALES_MANAGER_GROUP, MonthlyFeedback
 from model_bakery import baker
 
 from .test_feedback_api import QUESTIONNAIRES_URL
@@ -165,3 +165,9 @@ def response_payload(api_client, sales_manager, questionnaire_payload):
             },
         ],
     }
+
+
+@pytest.fixture
+def monthly_feedback(client_rep):
+    """Return a monthly feedback assigned to client_rep."""
+    return baker.make(MonthlyFeedback, client_rep=client_rep)

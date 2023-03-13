@@ -252,3 +252,32 @@ class TestManageResponses:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert Response.objects.count() == 0
+
+    def test_sales_manager_list_responses_200(
+        self, api_client, response_list_url, sales_manager
+    ):
+        """Test sales manager can list responses."""
+        api_client.force_authenticate(user=sales_manager)
+        questionnaire = baker.make(Questionnaire)
+        baker.make(Response, questionnaire=questionnaire, _quantity=2)
+        baker.make(Response)
+        url = response_list_url(questionnaire.id)
+
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert Response.objects.count() == 3
+        assert response.data["count"] == 2
+        assert len(response.data["results"]) == 1
+
+    def test_client_rep_cannot_list_responses_403(
+        self, api_client, client_rep, response_list_url
+    ):
+        """Test client reps cannot list responses."""
+        api_client.force_authenticate(user=client_rep)
+        questionnaire = baker.make(Questionnaire)
+        url = response_list_url(questionnaire.id)
+
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN

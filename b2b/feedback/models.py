@@ -1,6 +1,9 @@
 """Feedback app models."""
+import datetime
+
 from django.contrib.auth import get_user_model
 from django.db import models
+from feedback.validators import validate_month_format
 
 User = get_user_model()
 
@@ -148,3 +151,36 @@ class AnswerChoice(models.Model):
     def __str__(self):
         """Return the question_choice value."""
         return str(self.question_choice)
+
+
+class MonthlyFeedback(models.Model):
+    """The MonthlyFeedback model."""
+
+    client_rep = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="monthly_feedback",
+        blank=True,
+        null=True,
+        limit_choices_to={"groups__name": CLIENT_REP_GROUP},
+    )
+    month = models.CharField(
+        default=datetime.datetime.now().strftime("%Y-%m"),
+        max_length=7,
+        validators=[validate_month_format],
+    )
+    feedback = models.TextField()
+
+    class Meta:
+        """Monthly feedback meta class."""
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client_rep", "month"], name="unique_monthly_feedback"
+            ),
+        ]
+        verbose_name_plural = "Monthly feedback"
+
+    def __str__(self):
+        """Return a string representation of the MonthlyFeedback."""
+        return f"{self.client_rep} - {self.month}"

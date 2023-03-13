@@ -6,6 +6,7 @@ from .models import (
     Answer,
     AnswerChoice,
     Client,
+    MonthlyFeedback,
     Question,
     QuestionChoice,
     Questionnaire,
@@ -21,7 +22,7 @@ class ClientAdmin(admin.ModelAdmin):
     list_display = ["email", "name", "client_rep", "sales_manager", "id"]
     list_editable = ["name"]
     list_select_related = ["client_rep", "sales_manager"]
-    search_fields = ["email__icontains", "name__icontains"]
+    search_fields = ["email", "name"]
 
 
 class QuestionChoiceInline(NestedStackedInline):
@@ -48,7 +49,7 @@ class QuestionnaireAdmin(NestedModelAdmin):
     list_display = ["title", "client_rep", "created_at", "due_at", "id"]
     list_editable = ["due_at"]
     list_select_related = ["client_rep"]
-    search_fields = ["title__icontains", "description__icontains"]
+    search_fields = ["title", "client_rep__name"]
 
 
 class AnswerChoiceInline(NestedStackedInline):
@@ -74,3 +75,12 @@ class ResponseAdmin(NestedModelAdmin):
     inlines = [AnswerInline]
     list_select_related = ["questionnaire", "respondent"]
     search_fields = ["questionnaire__title", "respondent__email"]
+
+
+@admin.register(MonthlyFeedback)
+class MonthlyFeedbackAdmin(admin.ModelAdmin):
+    """Define admin site configuration for monthly feedback."""
+
+    autocomplete_fields = ["client_rep"]
+    list_select_related = ["client_rep"]
+    search_fields = ["month", "client_rep__name"]

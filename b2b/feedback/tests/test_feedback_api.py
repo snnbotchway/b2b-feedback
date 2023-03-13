@@ -21,7 +21,6 @@ User = get_user_model()
 
 CLIENTS_URL = reverse("feedback:client-list")
 QUESTIONNAIRES_URL = reverse("feedback:questionnaire-list")
-RESPONSES_URL = reverse("feedback:response-list")
 
 
 @pytest.mark.django_db
@@ -186,12 +185,14 @@ class TestResponses:
     """Tests on questionnaire management."""
 
     def test_client_rep_create_response_returns_201(
-        self, api_client, client_rep, response_payload
+        self, api_client, client_rep, response_list_url, response_payload
     ):
         """Test creating a questionnaire is successful."""
         api_client.force_authenticate(user=client_rep)
+        questionnaire = Questionnaire.objects.get(client_rep=client_rep)
+        url = response_list_url(questionnaire.id)
 
-        response = api_client.post(RESPONSES_URL, response_payload, format="json")
+        response = api_client.post(url, response_payload, format="json")
 
         assert response.status_code == status.HTTP_201_CREATED
         responses = Response.objects.filter(respondent=response.data["respondent"])
@@ -203,26 +204,30 @@ class TestResponses:
         assert response.data == serializer.data
 
     def test_client_reps_cannot_respond_unassigned_questionnaires(
-        self, api_client, response_payload
+        self, api_client, client_rep, response_list_url, response_payload
     ):
         """Test client reps can't respond if they haven't been assigned."""
         user = baker.make(User)
         client_reps = Group.objects.get(name=CLIENT_REP_GROUP)
         user.groups.add(client_reps)
         api_client.force_authenticate(user=user)
+        questionnaire = Questionnaire.objects.get(client_rep=client_rep)
+        url = response_list_url(questionnaire.id)
 
-        response = api_client.post(RESPONSES_URL, response_payload, format="json")
+        response = api_client.post(url, response_payload, format="json")
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
         assert Response.objects.count() == 0
 
     def test_anonymous_user_cannot_respond_to_questionnaires(
-        self, api_client, response_payload
+        self, api_client, response_list_url, response_payload
     ):
         """Test anonymous users cannot respond to questionnaires."""
         api_client.logout()
+        questionnaire = baker.make(Questionnaire)
+        url = response_list_url(questionnaire.id)
 
-        response = api_client.post(RESPONSES_URL, response_payload, format="json")
+        response = api_client.post(url, response_payload, format="json")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert Response.objects.count() == 0

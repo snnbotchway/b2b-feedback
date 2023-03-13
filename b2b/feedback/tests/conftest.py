@@ -44,6 +44,16 @@ def client_detail_url():
 
 
 @pytest.fixture
+def response_list_url():
+    """Return a questionnaire's response list url."""
+
+    def _get_url(questionnaire_id):
+        return reverse("feedback:questionnaire-responses-list", args=[questionnaire_id])
+
+    return _get_url
+
+
+@pytest.fixture
 def questionnaire_payload(client_rep):
     """Return a sample questionnaire."""
     return {

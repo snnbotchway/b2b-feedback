@@ -1,4 +1,5 @@
 """Views for the feedback app."""
+from django.contrib.auth import get_user_model
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -9,7 +10,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import GenericViewSet
 
 from .models import Client, MonthlyFeedback, Questionnaire, Response
-from .pagination import ResponsePagination
+from .pagination import MonthlyFeedbackPagination, ResponsePagination
 from .permissions import (
     IsClientRepresentative,
     IsSalesManager,
@@ -22,6 +23,8 @@ from .serializers import (
     QuestionnaireSerializer,
     ResponseSerializer,
 )
+
+User = get_user_model()
 
 
 class ClientViewSet(
@@ -132,13 +135,29 @@ class ResponseViewSet(
 
 class MonthlyFeedbackViewSet(
     CreateModelMixin,
+    ListModelMixin,
     GenericViewSet,
 ):
     """The monthly feedback view set."""
 
     queryset = MonthlyFeedback.objects.all()
     serializer_class = MonthlyFeedbackSerializer
-    permission_classes = [IsClientRepresentative]
+    pagination_class = MonthlyFeedbackPagination
+
+    def get_permissions(self):
+        """Return the appropriate permission."""
+        if self.request.method in SAFE_METHODS:
+            return [IsSalesManager()]
+        return [IsClientRepresentative()]
+
+    def get_queryset(self):
+        """Filter feedback for the current user."""
+        current_user_clients = Client.objects.select_related(
+            "client_rep", "sales_manager"
+        ).filter(sales_manager=self.request.user)
+        return self.queryset.filter(
+            client_rep__in=[client.client_rep for client in current_user_clients]
+        ).order_by("-month")
 
     def perform_create(self, serializer):
         """Assign current user as the client rep."""

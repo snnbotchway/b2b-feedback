@@ -150,7 +150,7 @@ class ResponseViewSet(
             recipient=author,
             respondent=user.name,
         )
-        message.send([author])
+        message.send([author.email])
 
 
 class MonthlyFeedbackViewSet(

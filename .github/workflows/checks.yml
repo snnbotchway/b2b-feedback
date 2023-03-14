@@ -43,6 +43,7 @@ jobs:
       - name: Make Envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
+          envkey_ALLOWED_HOSTS: ""
           envkey_DEBUG: True
           envkey_DATABASE_URL: "postgresql://devuser:changeme@db:5432/devdb"
           envkey_SECRET_KEY: change_me

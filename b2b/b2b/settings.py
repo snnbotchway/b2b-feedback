@@ -14,6 +14,7 @@ import os
 from typing import List
 
 import environ
+from celery.schedules import crontab
 
 env = environ.Env(
     # set casting, default value
@@ -168,3 +169,19 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
 }
+
+REDIS_HOST = env("REDIS_HOST")
+
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}/1"
+CELERY_BEAT_SCHEDULE = {
+    "send_reminder_emails": {
+        "task": "feedback.tasks.send_reminder_emails",
+        "schedule": crontab(hour=8, minute=0),  # Everyday at 8:00am
+    }
+}
+
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")

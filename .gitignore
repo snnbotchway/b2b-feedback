@@ -130,5 +130,5 @@ dmypy.json
 
 
 media/
-static/
+b2b/static/
 .vscode/*

@@ -1,4 +1,4 @@
-release: python manage.py collectstatic --noinput && python manage.py migrate
+release: python3 manage.py collectstatic --noinput && python3 manage.py migrate
 web: gunicorn b2b.wsgi --preload --workers 3
 celery: celery -A b2b worker --loglevel=info
 celery-beat: celery -A b2b beat --loglevel=info

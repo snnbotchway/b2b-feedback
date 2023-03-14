@@ -7,3 +7,5 @@ drf-nested-routers>=0.93.4,<0.94
 redis>=4.5.1,<4.6
 celery>=5.2.7,<5.3
 django-templated-mail>=1.1.1,<1.2
+whitenoise>=6.4.0,<6.5
+gunicorn>=20.1.0,<20.2

@@ -313,3 +313,34 @@ class TestManageMonthlyFeedback:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert MonthlyFeedback.objects.count() == 0
+
+    def test_sales_manager_list_monthly_feedback_200(
+        self, api_client, client_rep, sales_manager
+    ):
+        """Test sales manager list monthly feedback successful."""
+        baker.make(Client, client_rep=client_rep, sales_manager=sales_manager)
+        baker.make(Client)
+        baker.make(MonthlyFeedback, client_rep=client_rep)
+        baker.make(MonthlyFeedback)
+        api_client.force_authenticate(user=sales_manager)
+
+        response = api_client.get(MONTHLY_FEEDBACK_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert Client.objects.count() == 2
+        assert MonthlyFeedback.objects.count() == 2
+        assert response.data["count"] == 1
+
+    def test_only_sales_managers_can_list_monthly_feedback_403(
+        self, api_client, client_rep, sample_user
+    ):
+        """Test sales manager list monthly feedback successful."""
+        baker.make(Client, client_rep=client_rep, sales_manager=sample_user)
+        baker.make(Client)
+        baker.make(MonthlyFeedback, client_rep=client_rep)
+        baker.make(MonthlyFeedback)
+        api_client.force_authenticate(user=sample_user)
+
+        response = api_client.get(MONTHLY_FEEDBACK_URL)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN

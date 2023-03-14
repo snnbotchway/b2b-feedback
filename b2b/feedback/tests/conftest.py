@@ -9,11 +9,12 @@ from .test_feedback_api import QUESTIONNAIRES_URL
 
 
 @pytest.fixture
-def client_payload():
+def client_payload(client_rep):
     """Return sample payload of client information."""
     return {
         "email": "user@example.com",
         "name": "Test User",
+        "client_rep": client_rep.id,
     }
 
 

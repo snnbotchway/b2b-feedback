@@ -33,7 +33,7 @@ class TestManageClients:
     """Test the sales manager manage client endpoints."""
 
     def test_sales_manager_create_client_returns_201(
-        self, api_client, client_payload, sales_manager
+        self, api_client, client_payload, client_rep, sales_manager
     ):
         """Test sales manager can create client."""
         api_client.force_authenticate(user=sales_manager)
@@ -41,6 +41,8 @@ class TestManageClients:
         response = api_client.post(CLIENTS_URL, client_payload)
 
         client = Client.objects.get(pk=response.data.get("id"))
+        assert client.sales_manager == sales_manager
+        assert client.client_rep == client_rep
         serializer = ClientSerializer(client)
         assert response.data == serializer.data
         assert response.status_code == status.HTTP_201_CREATED
@@ -65,10 +67,13 @@ class TestManageClients:
 
         response = api_client.get(CLIENTS_URL)
 
-        clients = Client.objects.filter(sales_manager=sales_manager)
+        clients = Client.objects.filter(sales_manager=sales_manager).order_by(
+            "-created_at"
+        )
+        data = response.data["results"]
         serializer = ClientSerializer(clients, many=True)
-        assert response.data == serializer.data
-        assert len(response.data) == 1
+        assert data == serializer.data
+        assert response.data["count"] == 1
         assert response.status_code == status.HTTP_200_OK
         assert Client.objects.count() == 2
 
@@ -170,8 +175,9 @@ class TestManageQuestionnaires:
         assert response.status_code == status.HTTP_200_OK
         questionnaires = Questionnaire.objects.filter(client_rep=client_rep)
         serializer = QuestionnaireListSerializer(questionnaires, many=True)
-        assert serializer.data == response.data
-        assert len(response.data) == 1
+        data = response.data["results"]
+        assert serializer.data == data
+        assert response.data["count"] == 1
 
     def test_sales_manager_can_list_authored_questionnaires(
         self, api_client, sales_manager
@@ -186,8 +192,9 @@ class TestManageQuestionnaires:
         assert response.status_code == status.HTTP_200_OK
         questionnaires = Questionnaire.objects.filter(author=sales_manager)
         serializer = QuestionnaireListSerializer(questionnaires, many=True)
-        assert serializer.data == response.data
-        assert len(response.data) == 1
+        data = response.data["results"]
+        assert serializer.data == data
+        assert response.data["count"] == 1
 
     def test_non_client_rep_cannot_list_questionnaires(self, api_client, sample_user):
         """Test non client reps cannot list questionnaires."""
@@ -198,9 +205,7 @@ class TestManageQuestionnaires:
         response = api_client.get(QUESTIONNAIRES_URL)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        questionnaires = Questionnaire.objects.filter(client_rep=sample_user)
-        serializer = QuestionnaireListSerializer(questionnaires, many=True)
-        assert serializer.data != response.data
+        assert not response.data.get("results")
 
 
 @pytest.mark.django_db

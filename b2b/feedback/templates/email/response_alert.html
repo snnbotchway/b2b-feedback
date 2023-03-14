@@ -8,12 +8,12 @@
 {% blocktrans %}Dear {{ recipient }},{% endblocktrans %}
 {% blocktrans %}This email is just to let you know that {{ questionnaire_title }} just received a response from {{ respondent }}.{% endblocktrans %}
 
-{% blocktrans %}The SalesCorp team{% endblocktrans %}
+{% blocktrans %}The SalesCorp team.{% endblocktrans %}
 {% endblock text_body %}
 
 {% block html_body %}
 <p>{% blocktrans %}Dear {{ recipient }},{% endblocktrans %}</p>
 <p>{% blocktrans %}This email is just to let you know that <strong>{{ questionnaire_title }}</strong> just received a response from <strong>{{ respondent }}</strong>.{% endblocktrans %}</p>
 
-<p>{% blocktrans %}The SalesCorp team{% endblocktrans %}</p>
+<p>{% blocktrans %}The SalesCorp team.{% endblocktrans %}</p>
 {% endblock html_body %}

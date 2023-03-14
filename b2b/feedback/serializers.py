@@ -28,7 +28,10 @@ class ClientSerializer(serializers.ModelSerializer):
             "email",
             "name",
             "client_rep",
-            "sales_manager",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
             "created_at",
             "updated_at",
         ]

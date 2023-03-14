@@ -9,6 +9,7 @@ from rest_framework.mixins import (
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import GenericViewSet
 
+from .email import ResponseAlertEmail
 from .models import Client, MonthlyFeedback, Questionnaire, Response
 from .pagination import MonthlyFeedbackPagination, ResponsePagination
 from .permissions import (
@@ -48,7 +49,7 @@ class ClientViewSet(
 
     def perform_create(self, serializer):
         """Assign current user as the manager on client creation."""
-        return serializer.save(sales_manager=self.request.user)
+        serializer.save(sales_manager=self.request.user)
 
 
 class QuestionnaireViewSet(
@@ -92,7 +93,7 @@ class QuestionnaireViewSet(
 
     def perform_create(self, serializer):
         """Set current user as questionnaire author."""
-        return serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
 
 class ResponseViewSet(
@@ -128,9 +129,17 @@ class ResponseViewSet(
     def perform_create(self, serializer):
         """Add response relationships."""
         questionnaire_id = self.kwargs["questionnaire_pk"]
-        return serializer.save(
-            questionnaire_id=questionnaire_id, respondent=self.request.user
+        user = self.request.user
+        response = serializer.save(questionnaire_id=questionnaire_id, respondent=user)
+
+        # Send alert to author
+        author = response.questionnaire.author
+        message = ResponseAlertEmail(
+            questionnaire_title=response.questionnaire.title,
+            recipient=author,
+            respondent=user.name,
         )
+        message.send([author])
 
 
 class MonthlyFeedbackViewSet(
@@ -161,4 +170,4 @@ class MonthlyFeedbackViewSet(
 
     def perform_create(self, serializer):
         """Assign current user as the client rep."""
-        return serializer.save(client_rep=self.request.user)
+        serializer.save(client_rep=self.request.user)

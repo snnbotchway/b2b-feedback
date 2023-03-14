@@ -1,0 +1,19 @@
+{% load i18n %}
+
+{% block subject %}
+{% blocktrans %}Questionnaire Response Reminder{% endblocktrans %}
+{% endblock subject %}
+
+{% block text_body %}
+{% blocktrans %}Dear Client,{% endblocktrans %}
+{% blocktrans %}This email is just a quick reminder to let you know that we are still waiting for your response to the {{ questionnaire_title }} questionnaire. Your feedback is important to us and will help us improve our services.{% endblocktrans %}
+
+{% blocktrans %}The SalesCorp team.{% endblocktrans %}
+{% endblock text_body %}
+
+{% block html_body %}
+<p>{% blocktrans %}Dear Client,{% endblocktrans %}</p>
+<p>{% blocktrans %}This email is just a quick reminder to let you know that we are still waiting for your response to the <strong>{{ questionnaire_title }}</strong> questionnaire. Your feedback is important to us and will help us improve our services.{% endblocktrans %}</p>
+
+<p>{% blocktrans %}The SalesCorp team.{% endblocktrans %}</p>
+{% endblock html_body %}

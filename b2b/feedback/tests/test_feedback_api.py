@@ -1,6 +1,8 @@
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core import mail
 from django.urls import reverse
 from feedback.models import (
     CLIENT_REP_GROUP,
@@ -225,6 +227,11 @@ class TestManageResponses:
         assert AnswerChoice.objects.count() == 4
         serializer = ResponseSerializer(feedback_response)
         assert response.data == serializer.data
+
+        # Assert email alert is sent to the questionnaire author
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to[0] == questionnaire.author
+        assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
 
     def test_client_reps_cannot_respond_unassigned_questionnaires(
         self, api_client, client_rep, response_list_url, response_payload

@@ -48,7 +48,7 @@ class ClientViewSet(
 
     def perform_create(self, serializer):
         """Assign current user as the manager on client creation."""
-        return serializer.save(sales_manager=self.request.user)
+        serializer.save(sales_manager=self.request.user)
 
 
 class QuestionnaireViewSet(
@@ -92,7 +92,7 @@ class QuestionnaireViewSet(
 
     def perform_create(self, serializer):
         """Set current user as questionnaire author."""
-        return serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
 
 class ResponseViewSet(
@@ -128,9 +128,7 @@ class ResponseViewSet(
     def perform_create(self, serializer):
         """Add response relationships."""
         questionnaire_id = self.kwargs["questionnaire_pk"]
-        return serializer.save(
-            questionnaire_id=questionnaire_id, respondent=self.request.user
-        )
+        serializer.save(questionnaire_id=questionnaire_id, respondent=self.request.user)
 
 
 class MonthlyFeedbackViewSet(
@@ -161,4 +159,4 @@ class MonthlyFeedbackViewSet(
 
     def perform_create(self, serializer):
         """Assign current user as the client rep."""
-        return serializer.save(client_rep=self.request.user)
+        serializer.save(client_rep=self.request.user)

@@ -11,7 +11,12 @@ from rest_framework.viewsets import GenericViewSet
 
 from .email import ResponseAlertEmail
 from .models import Client, MonthlyFeedback, Questionnaire, Response
-from .pagination import MonthlyFeedbackPagination, ResponsePagination
+from .pagination import (
+    ClientPagination,
+    MonthlyFeedbackPagination,
+    QuestionnairePagination,
+    ResponsePagination,
+)
 from .permissions import (
     IsClientRepresentative,
     IsSalesManager,
@@ -38,6 +43,7 @@ class ClientViewSet(
 
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    pagination_class = ClientPagination
     permission_classes = [IsSalesManager]
 
     def get_queryset(self):
@@ -45,7 +51,7 @@ class ClientViewSet(
         user = self.request.user
         if user.is_superuser:
             return self.queryset
-        return self.queryset.filter(sales_manager=user)
+        return self.queryset.filter(sales_manager=user).order_by("-created_at")
 
     def perform_create(self, serializer):
         """Assign current user as the manager on client creation."""
@@ -60,7 +66,12 @@ class QuestionnaireViewSet(
 ):
     """The questionnaire viewset."""
 
-    queryset = Questionnaire.objects.prefetch_related("questions__choices").all()
+    queryset = (
+        Questionnaire.objects.prefetch_related("questions__choices")
+        .all()
+        .order_by("-created_at")
+    )
+    pagination_class = QuestionnairePagination
     serializer_class = QuestionnaireSerializer
 
     def _fetch_params(self):

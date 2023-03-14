@@ -235,7 +235,7 @@ class TestManageResponses:
 
         # Assert email alert is sent to the questionnaire author
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to[0] == questionnaire.author
+        assert mail.outbox[0].to[0] == questionnaire.author.email
         assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
 
     def test_client_reps_cannot_respond_unassigned_questionnaires(

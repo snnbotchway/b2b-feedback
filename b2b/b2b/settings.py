@@ -177,9 +177,9 @@ REST_FRAMEWORK = {
     ),
 }
 
-REDIS_HOST = env("REDIS_HOST")
+REDIS_URL = env("REDIS_URL")
 
-CELERY_BROKER_URL = f"redis://{REDIS_HOST}/1"
+CELERY_BROKER_URL = REDIS_URL
 CELERY_BEAT_SCHEDULE = {
     "send_reminder_emails": {
         "task": "feedback.tasks.send_reminder_emails",

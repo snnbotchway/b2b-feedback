@@ -10,7 +10,7 @@ from .email import QuestionnaireReminderEmail
 
 @shared_task
 def send_reminder_emails():
-    """Send reminder to questionnaires that are due in 3 days."""
+    """Send emails to clients whose questionnaires are due in 3 days."""
     three_days_from_now = timezone.now() + timedelta(days=3)
     due_questionnaires = Questionnaire.objects.filter(
         is_active=True,

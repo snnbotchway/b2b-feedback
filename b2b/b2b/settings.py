@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "feedback.apps.FeedbackConfig",
     # Third-party apps
+    "corsheaders",
     "nested_admin",
     "rest_framework",
     "rest_framework.authtoken",
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -92,6 +94,9 @@ if DEBUG:
 # Set trusted origins
 CSRF_TRUSTED_ORIGINS: List[str] = list(
     filter(None, env("CSRF_TRUSTED_ORIGINS").split(","))
+)
+CORS_ALLOWED_ORIGINS: List[str] = list(
+    filter(None, env("CORS_ALLOWED_ORIGINS").split(","))
 )
 
 ROOT_URLCONF = "b2b.urls"

@@ -44,7 +44,7 @@ class QuestionInline(NestedStackedInline):
 class QuestionnaireAdmin(NestedModelAdmin):
     """Define admin configuration for the Questionnaire model."""
 
-    autocomplete_fields = ["client_rep"]
+    autocomplete_fields = ["author", "client_rep"]
     inlines = [QuestionInline]
     list_display = ["title", "client_rep", "created_at", "due_at", "id"]
     list_editable = ["due_at"]

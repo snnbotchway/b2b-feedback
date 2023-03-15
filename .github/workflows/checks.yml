@@ -53,6 +53,7 @@ jobs:
           envkey_EMAIL_PORT: 25
           envkey_DEFAULT_FROM_EMAIL: from@snnbotchway.com
           envkey_REDIS_URL: redis://redis
+          envkey_CSRF_TRUSTED_ORIGINS: http://127.0.0.1:8000
           directory: .
           file_name: .env
           fail_on_empty: false

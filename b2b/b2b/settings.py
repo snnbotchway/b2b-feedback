@@ -88,11 +88,11 @@ if DEBUG:
         "10.0.2.2",
         "0.0.0.0:8000",
     ]
-else:
-    # Set trusted origins
-    CSRF_TRUSTED_ORIGINS: List[str] = list(
-        filter(None, env("CSRF_TRUSTED_ORIGINS").split(","))
-    )
+
+# Set trusted origins
+CSRF_TRUSTED_ORIGINS: List[str] = list(
+    filter(None, env("CSRF_TRUSTED_ORIGINS").split(","))
+)
 
 ROOT_URLCONF = "b2b.urls"
 

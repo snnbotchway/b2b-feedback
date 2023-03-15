@@ -52,7 +52,7 @@ jobs:
           envkey_EMAIL_HOST_PASSWORD: ""
           envkey_EMAIL_PORT: 25
           envkey_DEFAULT_FROM_EMAIL: from@snnbotchway.com
-          envkey_REDIS_HOST: redis
+          envkey_REDIS_URL: redis://redis
           directory: .
           file_name: .env
           fail_on_empty: false
